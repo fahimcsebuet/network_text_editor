@@ -28,6 +28,8 @@ private:
     void send_logout_info_to_clients(std::string username);
     static void sigint_handler(int signal);
     static server *_server;
+    void download_file_net(std::string path);
+    void download_file_net1();
 };
 
 #endif
