@@ -1,4 +1,4 @@
-MKDIR_P=mkdir -p
+DIR_P=mkdir -p
 
 SERVER_SOURCE=*.cpp
 SERVER_OUTPUT_DIR=output

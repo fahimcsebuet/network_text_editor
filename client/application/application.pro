@@ -1,5 +1,12 @@
 QT += widgets
 
+# With C++11 support
+greaterThan(QT_MAJOR_VERSION, 4){
+CONFIG += c++11
+} else {
+QMAKE_CXXFLAGS += -std=c++0x
+}
+
 HEADERS       = mainwindow.h \
     client.h \
     file_handler.h
