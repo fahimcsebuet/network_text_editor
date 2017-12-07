@@ -15,6 +15,9 @@
 #include <algorithm>
 #include <curl/curl.h>
 #include <boost/filesystem.hpp>
+#include <fcntl.h>
+#include <sys/sendfile.h>
+#include <sys/stat.h>
 
 #include "server.h"
 
@@ -69,14 +72,14 @@ void server::download_file_net1()
 	{
 		boost::filesystem::path const &path1 = "/home/salman/test";
 		boost::filesystem::path const &path2 = "/home/salman/testcopy";
-		boost::filesystem::copy_file(path1, path2,boost::filesystem::copy_option::overwrite_if_exists);
+		boost::filesystem::copy_file(path1, path2, boost::filesystem::copy_option::overwrite_if_exists);
 	}
 }
 
 int server::run()
 {
 	int _port = get_port_from_configuration_map();
-	int serv_sockfd, cli_sockfd;
+	int serv_sockfd; // cli_sockfd;
 	struct sockaddr_in serv_addr, cli_addr;
 	socklen_t sock_len;
 	ssize_t _buf_size;
@@ -549,6 +552,44 @@ void server::handle_command_from_client(int sockfd, std::vector<std::string> par
 			_user_info_itr->second.sockfd = -1;
 		}
 		send_logout_info_to_clients(_username);
+	}
+	else if (_command_operator == "p")
+	{
+		send_data_to_client(sockfd, "pa", "");
+		// OPEN file, read file, stream, send stream to client
+		int fd;					  /* file descriptor for file to send */
+		struct stat stat_buf;	 /* argument to fstat */
+		off_t offset = 0;		  /* file offset */
+		fd = open("salman", O_RDONLY);
+		if (fd == -1)
+		{
+			fprintf(stderr, "unable to open '%s': %s\n", "salman", strerror(errno));
+			exit(1);
+		}
+
+		/* get the size of the file to be sent */
+		fstat(fd, &stat_buf);
+
+		/* copy file using sendfile */
+		int rc;
+		offset = 0;
+		rc = sendfile(cli_sockfd, fd, &offset, stat_buf.st_size);
+		if (rc == -1)
+		{
+			fprintf(stderr, "error from sendfile: %s\n", strerror(errno));
+			exit(1);
+		}
+		if (rc != stat_buf.st_size)
+		{
+			fprintf(stderr, "incomplete transfer from sendfile: %d of %d bytes\n",
+					rc,
+					(int)stat_buf.st_size);
+			exit(1);
+		}
+
+		/* close descriptor for file that was sent */
+		close(fd);
+		//send_data_to_client(sockfd, "pa", "");
 	}
 	else
 	{

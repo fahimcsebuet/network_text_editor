@@ -14,6 +14,8 @@ public:
     int _exit();
 
 private:
+    
+	int cli_sockfd;
     std::string user_info_file_path;
     std::string configuration_file_path;
     std::unordered_map<std::string, user_info> user_info_map;

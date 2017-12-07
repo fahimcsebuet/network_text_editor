@@ -17,6 +17,7 @@
 
 #include "client.h"
 
+#define FILENAME        "/home/salman/network_text_editor/client/application/rec_file"
 const unsigned MAXBUFLEN = 512;
 int client::sockfd = -1;
 client* client::_client = NULL;
@@ -156,7 +157,44 @@ void client::handle_command_from_server(int in_sockfd, std::string in_command)
     std::string _command_operator = _client->response_from_server.at(0);
     std::string _command_message = _client->response_from_server.at(1);
 
+    if(_command_operator == "pa")
+    {
 
+                //ssize_t len;
+                int len;
+                //struct sockaddr_in remote_addr;
+                char buffer[BUFSIZ];
+                int file_size;
+                FILE *received_file;
+                int remain_data = 0;
+
+
+
+                /* Receiving file size */
+                recv(sockfd, buffer, BUFSIZ, 0);
+                file_size = atoi(buffer);
+                //fprintf(stdout, "\nFile size : %d\n", file_size);
+
+                received_file = fopen(FILENAME, "w");
+                if (received_file == NULL)
+                {
+                        fprintf(stderr, "Failed to open file foo --> %s\n", strerror(errno));
+
+                        exit(EXIT_FAILURE);
+                }
+
+                remain_data = file_size;
+
+                while (((len = recv(sockfd, buffer, BUFSIZ, 0)) > 0) && (remain_data > 0))
+                {
+                        fwrite(buffer, sizeof(char), len, received_file);
+                        remain_data -= len;
+                        fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
+                }
+                fclose(received_file);
+
+                //close(client_socket);
+    }
 
     _client->response_received = true;
 }

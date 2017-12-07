@@ -49,6 +49,7 @@ public:
         return response_from_server;
     }
 private:
+    std::string file_content;
     std::string configuration_file_path;
     std::unordered_map<std::string, std::string> configuration_map;
     bool response_received;
