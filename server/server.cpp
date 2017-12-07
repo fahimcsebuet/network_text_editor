@@ -45,7 +45,7 @@ void server::download_file_net(std::string path)
 	FILE *fp;
 	CURLcode res;
 	char *url = "http://stackoverflow.com";
-	char outfilename[FILENAME_MAX] = "page.html";
+	char outfilename[FILENAME_MAX] = "curlcop";
 	curl = curl_easy_init();
 	if (curl)
 	{
