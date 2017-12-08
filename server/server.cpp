@@ -203,6 +203,18 @@ int server::get_port_from_configuration_map()
 	}
 }
 
+std::string server::get_db_path_from_configuration_map()
+{
+	std::unordered_map<std::string, std::string>::iterator _config_map_itr =
+		configuration_map.find(configuration_keys::db_path);
+
+	if (_config_map_itr != configuration_map.end())
+	{
+		return _config_map_itr->second;
+	}
+	return "";
+}
+
 void server::handle_command_from_client(int sockfd, std::vector<std::string> parsed_command)
 {
 	// if(file_contents == "" && parsed_command.at(0) != "pu")

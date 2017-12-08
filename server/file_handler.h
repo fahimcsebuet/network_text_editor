@@ -10,6 +10,7 @@
 namespace configuration_keys
 {
     const std::string port = "port";
+    const std::string db_path = "db_path";
 }
 
 class utility

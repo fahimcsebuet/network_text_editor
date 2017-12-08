@@ -1,1 +1,2 @@
 port:5100
+db_path:/home/fahim/Documents/FSU/Courses/COP5570/network_text_editor/server/output/
