@@ -36,6 +36,7 @@ private slots:
 #endif
     void change_character_received_slot(int position, QString text);
     void pull_document_received_slot(QString text);
+    void client_exit_slot();
 
 public slots:
     void onTextChangedSignal();
@@ -48,7 +49,6 @@ private:
     bool saveFile(const QString &fileName);
     void setCurrentFile(const QString &fileName);
     QString strippedName(const QString &fullFileName);
-
     QPlainTextEdit *textEdit;
     QString curFile;
     client m_client;

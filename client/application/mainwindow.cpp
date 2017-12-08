@@ -21,6 +21,7 @@ MainWindow::MainWindow()
             this, SLOT(change_character_received_slot(int, QString)));
     connect(&m_client, SIGNAL(pull_document_received_signal(QString)),
             this, SLOT(pull_document_received_slot(QString)));
+    connect(&m_client, SIGNAL(exit_signal()), this, SLOT(client_exit_slot()));
 
 #ifndef QT_NO_SESSIONMANAGER
     QGuiApplication::setFallbackSessionManagementEnabled(false);
@@ -79,6 +80,14 @@ void MainWindow::change_character_received_slot(int position, QString text)
 void MainWindow::pull_document_received_slot(QString text)
 {
     textEdit->setPlainText(text);
+}
+
+void MainWindow::client_exit_slot()
+{
+    char _sentinel = -1;
+    std::string _command = "pu";
+    QString _text = textEdit->toPlainText();
+    m_client.send_data_to_server(_command + _sentinel + _text.toStdString());
 }
 
 void MainWindow::onTextChangedSignal()

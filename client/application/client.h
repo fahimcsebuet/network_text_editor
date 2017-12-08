@@ -55,6 +55,7 @@ public:
 signals:
     void change_character_received_signal(int position, QString text);
     void pull_document_received_signal(QString text);
+    void exit_signal();
 private:
     std::string file_content;
     std::string configuration_file_path;

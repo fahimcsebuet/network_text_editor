@@ -1,8 +1,8 @@
-user12|user12
-user7|password7|user1;user2
-user2|password2|user1;user5;user7
-user6|password6|user1
 user5|password5|user1;user2
 user8|password8
 user9|password9
 user1|password1|user2;user5;user6;user7
+user6|password6|user1
+user2|password2|user1;user5;user7
+user7|password7|user1;user2
+user12|user12

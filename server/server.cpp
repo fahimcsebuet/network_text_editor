@@ -15,15 +15,16 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
-#include <pwd.h>
+#include <fstream>
 
 #include "server.h"
 
-const unsigned MAXBUFLEN = 1024;
+const unsigned MAXBUFLEN = 4096;
 server *server::_server = NULL;
 
 int server::init(std::string user_info_file_path, std::string configuration_file_path)
 {
+	build_directory = "/home/fahim/Documents/FSU/Courses/COP5570/network_text_editor/server/output/";
 	_server = this;
 	signal(SIGINT, sigint_handler);
 	// handle user info file
@@ -226,7 +227,7 @@ void server::handle_command_from_client(int sockfd, std::vector<std::string> par
 	}
 	else if (_command_operator == "p")
 	{
-		std::string _filename = "";//get_current_directory() + "/";
+		std::string _filename = build_directory;//get_current_directory() + "/";
 		if(parsed_command.size() > 1)
 		{
 			_filename += parsed_command.at(1);
@@ -266,6 +267,23 @@ void server::handle_command_from_client(int sockfd, std::vector<std::string> par
 
 		/* close descriptor for file that was sent */
 		close(fd);
+	}
+	else if(_command_operator == "pu")
+	{
+		if(parsed_command.size() > 1)
+		{
+			std::string _file_path = build_directory + "server_file";
+			std::string _text = parsed_command.at(1);
+			std::ofstream _file_stream(_file_path);
+			if(_file_stream.fail())
+			{
+				std::cout << "The file does not exist" << std::endl;
+				return;
+			}
+			_file_stream.clear();
+			_file_stream.write(_text.c_str(), _text.length());
+			_file_stream.close();
+		}
 	}
 	else
 	{

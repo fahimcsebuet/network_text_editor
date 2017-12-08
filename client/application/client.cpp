@@ -82,7 +82,7 @@ int client::start()
         return EXIT_FAILURE;
     }
 
-    pull_file("/home/fahim/Documents/FSU/Courses/COP5570/network_text_editor/server/output/server_file");
+    pull_file("server_file");
     pthread_create(&tid, NULL, &process_connection, NULL);
     return EXIT_SUCCESS;
 }
@@ -151,6 +151,7 @@ int client::send_data_to_server(std::string data)
 
 int client::_exit()
 {
+    emit exit_signal();
     if(sockfd != -1) close(sockfd);
     configuration_file_handler _configuration_file_handler(configuration_file_path);
     _configuration_file_handler.save_configuration(configuration_map);

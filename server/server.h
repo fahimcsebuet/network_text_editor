@@ -22,6 +22,7 @@ private:
     std::unordered_map<std::string, user_info> user_info_map;
     std::unordered_map<std::string, std::string> configuration_map;
     std::unordered_map<int, std::string> sockfd_to_username;
+    std::string build_directory;
 
     std::string get_fully_qualified_domain_name();
     int get_port_from_configuration_map();
