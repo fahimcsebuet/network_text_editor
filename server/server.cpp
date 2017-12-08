@@ -25,7 +25,6 @@ server *server::_server = NULL;
 int server::init(std::string user_info_file_path, std::string configuration_file_path)
 {
 	file_contents = "init";
-	build_directory = "/home/fahim/Documents/FSU/Courses/COP5570/network_text_editor/server/output/";
 	_server = this;
 	signal(SIGINT, sigint_handler);
 	// handle user info file
@@ -37,6 +36,7 @@ int server::init(std::string user_info_file_path, std::string configuration_file
 	this->configuration_file_path = configuration_file_path;
 	configuration_file_handler _configuration_file_handler(configuration_file_path);
 	_configuration_file_handler.load_configuration(configuration_map);
+	db_path = get_db_path_from_configuration_map();
 	return EXIT_SUCCESS;
 }
 
@@ -246,7 +246,7 @@ void server::handle_command_from_client(int sockfd, std::vector<std::string> par
 	}
 	else if (_command_operator == "p")
 	{
-		std::string _filename = build_directory;//get_current_directory() + "/";
+		std::string _filename = db_path;
 		if(parsed_command.size() > 1)
 		{
 			_filename += parsed_command.at(1);
@@ -291,7 +291,7 @@ void server::handle_command_from_client(int sockfd, std::vector<std::string> par
 	{
 		if(parsed_command.size() > 1)
 		{
-			std::string _file_path = build_directory + "server_file";
+			std::string _file_path = db_path + "server_file";
 			std::string _text = parsed_command.at(1);
 			file_contents = _text;
 			std::ofstream _file_stream(_file_path);
