@@ -14,7 +14,7 @@ all: $(SERVER_OUTPUT)
 
 $(SERVER_OUTPUT): $(SERVER_SOURCE)
 	$(MKDIR_P) $(SERVER_OUTPUT_DIR)
-	$(CXX) $(CXXFLAGS) $(SERVER_SOURCE) -o$(SERVER_OUTPUT) -L/usr/include/curl/lib -lcurl -lboost_system -lboost_filesystem
+	$(CXX) $(CXXFLAGS) $(SERVER_SOURCE) -o$(SERVER_OUTPUT)
 
 clean:
 	rm -f $(SERVER_OUTPUT)

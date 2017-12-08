@@ -15,9 +15,10 @@
 #include <signal.h>
 #include <list>
 
+#include <QDebug>
+
 #include "client.h"
 
-#define FILENAME        "/home/salman/network_text_editor/client/application/rec_file"
 const unsigned MAXBUFLEN = 512;
 int client::sockfd = -1;
 client* client::_client = NULL;
@@ -65,7 +66,7 @@ int client::start()
         sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sockfd < 0) 
             continue;
-        if (connect(sockfd, res->ai_addr, res->ai_addrlen) == 0)
+        if (::connect(sockfd, res->ai_addr, res->ai_addrlen) == 0)
         {
             flag = 1;
             break;
@@ -87,7 +88,6 @@ int client::start()
 
 int client::send_data_to_server(std::string data)
 {
-    utility::trim_string(data);
     if(data.empty())
     {
         return EXIT_FAILURE;
@@ -147,7 +147,7 @@ void client::handle_command_from_server(int in_sockfd, std::string in_command)
     char _sentinel = -1;
     _client->response_from_server = utility::split_string(in_command, _sentinel);
 
-    if(_client->response_from_server.size() <= 1)
+    if(_client->response_from_server.size() < 4)
     {
         std::cout << "Bad Response from Server" << std::endl;
         _client->response_received = true;
@@ -175,7 +175,7 @@ void client::handle_command_from_server(int in_sockfd, std::string in_command)
                 file_size = atoi(buffer);
                 //fprintf(stdout, "\nFile size : %d\n", file_size);
 
-                received_file = fopen(FILENAME, "w");
+                received_file = fopen("recfile", "w");
                 if (received_file == NULL)
                 {
                         fprintf(stderr, "Failed to open file foo --> %s\n", strerror(errno));
@@ -195,8 +195,26 @@ void client::handle_command_from_server(int in_sockfd, std::string in_command)
 
                 //close(client_socket);
     }
+    else if(_command_operator == "ccr")
+    {
+        if(_command_message == "200")
+        {
+            qDebug() << QString::fromStdString(in_command);
+            int _position = std::stoi(_client->response_from_server.at(2));
+            qDebug() << _position;
+            QString _changed_text = QString::fromStdString(_client->response_from_server.at(3));
+            qDebug() << _changed_text;
 
-    _client->response_received = true;
+            if(_changed_text.length() > 0 && _position != -1)
+            {
+                emit change_character_received_signal(_position, _changed_text);
+            }
+            _client->response_from_server.clear();
+        }
+    }
+
+//    _client->response_received = true;
+//    _client->response_condition_variable.notify_all();
 }
 
 std::string client::get_fully_qualified_domain_name()

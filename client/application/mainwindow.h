@@ -20,7 +20,6 @@ public:
     MainWindow();
 
     void loadFile(const QString &fileName);
-    void set_client(client in_client);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -35,10 +34,10 @@ private slots:
 #ifndef QT_NO_SESSIONMANAGER
     void commitData(QSessionManager &);
 #endif
+    void change_character_received_slot(int position, QString text);
 
 public slots:
     void onTextChangedSignal();
-
 private:
     void createActions();
     void createStatusBar();
@@ -52,6 +51,7 @@ private:
     QPlainTextEdit *textEdit;
     QString curFile;
     client m_client;
+    std::atomic<bool> isEditedManually;
 };
 
 #endif

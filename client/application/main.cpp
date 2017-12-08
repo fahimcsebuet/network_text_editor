@@ -24,12 +24,6 @@ int main(int argc, char *argv[])
     if (!parser.positionalArguments().isEmpty())
         mainWin.loadFile(parser.positionalArguments().first());
 
-    // Start client
-    std::string _configuration_file = "configuration_file";
-    client _client;
-    _client.init(_configuration_file);
-    _client.start();
-    mainWin.set_client(_client);
     mainWin.show();
     return app.exec();
 }

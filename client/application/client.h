@@ -7,6 +7,8 @@
 #include <mutex>
 #include <atomic>
 
+#include <QObject>
+
 #include "file_handler.h"
 
 class friend_info
@@ -36,8 +38,9 @@ public:
     int sockfd;
 };
 
-class client
+class client : public QObject
 {
+    Q_OBJECT
 public:
     client(){}
     int init(std::string configuration_file_path);
@@ -48,13 +51,15 @@ public:
     {
         return response_from_server;
     }
+signals:
+    void change_character_received_signal(int position, QString text);
 private:
     std::string file_content;
     std::string configuration_file_path;
     std::unordered_map<std::string, std::string> configuration_map;
     bool response_received;
-    //std::mutex response_mutex;
-    //std::condition_variable response_condition_variable;
+    std::mutex response_mutex;
+    std::condition_variable response_condition_variable;
     std::vector<std::string> response_from_server;
     static int sockfd;
     static void * process_connection(void *arg);

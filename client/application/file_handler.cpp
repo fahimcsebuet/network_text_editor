@@ -29,7 +29,7 @@ std::vector<std::string> utility::split_string(const std::string& command_string
 
     while(std::getline(_command_string_stream, _splitted_string, delimiter))
     {
-        trim_string(_splitted_string);
+        //trim_string(_splitted_string);
         if(!_splitted_string.empty())
         {
             _splitted_string_vector.push_back(_splitted_string);

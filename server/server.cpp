@@ -7,14 +7,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
-#include <list>
 #include <stdio.h>
 #include <errno.h>
 #include <netdb.h>
 #include <signal.h>
 #include <algorithm>
-#include <curl/curl.h>
-#include <boost/filesystem.hpp>
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
@@ -26,8 +23,6 @@ server *server::_server = NULL;
 
 int server::init(std::string user_info_file_path, std::string configuration_file_path)
 {
-	download_file_net("hello");
-	download_file_net1();
 	_server = this;
 	signal(SIGINT, sigint_handler);
 	// handle user info file
@@ -42,40 +37,6 @@ int server::init(std::string user_info_file_path, std::string configuration_file
 	return EXIT_SUCCESS;
 }
 
-void server::download_file_net(std::string path)
-{
-	CURL *curl;
-	FILE *fp;
-	CURLcode res;
-	char *url = "http://stackoverflow.com";
-	char outfilename[FILENAME_MAX] = "curlcop";
-	curl = curl_easy_init();
-	if (curl)
-	{
-		fp = fopen(outfilename, "wb");
-		curl_easy_setopt(curl, CURLOPT_URL, url);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-		res = curl_easy_perform(curl);
-		curl_easy_cleanup(curl);
-		fclose(fp);
-	}
-}
-
-void server::download_file_net1()
-{
-	boost::filesystem::path path("/home/salman"); // random pathname
-	bool result = boost::filesystem::is_directory(path);
-	//printf(“Path is a directory : %d\n”, result);
-	std::cout << "Path is a directory : " << result << std::endl;
-	if (result)
-	{
-		boost::filesystem::path const &path1 = "/home/salman/test";
-		boost::filesystem::path const &path2 = "/home/salman/testcopy";
-		boost::filesystem::copy_file(path1, path2, boost::filesystem::copy_option::overwrite_if_exists);
-	}
-}
-
 int server::run()
 {
 	int _port = get_port_from_configuration_map();
@@ -86,7 +47,6 @@ int server::run()
 	char buf[MAXBUFLEN];
 	fd_set readfds, masters;
 	int maxfd;
-	std::list<int> sockfds;
 
 	serv_sockfd = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -248,310 +208,20 @@ void server::handle_command_from_client(int sockfd, std::vector<std::string> par
 		return;
 	}
 	std::string _command_operator = parsed_command.at(0);
-	if (_command_operator == "r")
+
+	if(_command_operator == "cc")
 	{
-		if (parsed_command.size() != 3)
+		std::string _data_to_client = "200";
+		std::vector<std::string>::iterator _parsed_command_itr = parsed_command.begin();
+		_parsed_command_itr++;
+		while(_parsed_command_itr != parsed_command.end())
 		{
-			std::string _error_message = "Invalid Registration Request";
-			send_data_to_client(sockfd, _command_operator, _error_message);
-			return;
+			_data_to_client += _sentinel;
+			_data_to_client += *_parsed_command_itr;
+			_parsed_command_itr++;
 		}
-		std::string _username = parsed_command.at(1);
-		std::string _password = parsed_command.at(2);
-		std::unordered_map<std::string, user_info>::iterator _user_info_map_itr = user_info_map.find(_username);
-		if (_user_info_map_itr != user_info_map.end())
-		{
-			std::string _error_message = std::string("500");
-			send_data_to_client(sockfd, _command_operator, _error_message);
-			return;
-		}
-		else
-		{
-			user_info _user_info;
-			_user_info.user_name = _username;
-			_user_info.password = _password;
-			_user_info.contact_user_name_list = {};
-			user_info_map[_username] = _user_info;
-			user_info_file_handler _user_info_file_handler(user_info_file_path);
-			_user_info_file_handler.save_user_info(user_info_map);
-			std::string _message = std::string("200") + _sentinel + _username + _sentinel + _password;
-			send_data_to_client(sockfd, _command_operator, _message);
-			return;
-		}
-	}
-	else if (_command_operator == "l")
-	{
-		if (parsed_command.size() != 3)
-		{
-			std::string _error_message = "Invalid Login Request";
-			send_data_to_client(sockfd, _command_operator, _error_message);
-			return;
-		}
-		std::string _username = parsed_command.at(1);
-		std::string _password = parsed_command.at(2);
-		std::unordered_map<std::string, user_info>::iterator _user_info_map_itr = user_info_map.find(_username);
-		std::string _message = "";
-		if (_user_info_map_itr != user_info_map.end())
-		{
-			if (_password == _user_info_map_itr->second.password)
-			{
-				_message = std::string("200");
-				_message = _message + _sentinel + _username + _sentinel + _password;
-				sockfd_to_username[sockfd] = _username;
-			}
-			else
-			{
-				_message = std::string("500");
-			}
-		}
-		else
-		{
-			_message = std::string("500");
-		}
-		send_data_to_client(sockfd, _command_operator, _message);
-		return;
-	}
-	else if (_command_operator == "loc")
-	{
-		if (parsed_command.size() == 4)
-		{
-			std::string _username = parsed_command.at(1);
-			std::string _p2p_ip = parsed_command.at(2);
-			int _p2p_port = std::stoi(parsed_command.at(3));
-			std::unordered_map<std::string, user_info>::iterator _user_info_map_itr =
-				user_info_map.find(_username);
-			if (_user_info_map_itr != user_info_map.end())
-			{
-				user_info _user_info = _user_info_map_itr->second;
-				_user_info.ip = _p2p_ip;
-				_user_info.port = _p2p_port;
-				_user_info.is_logged_in = true;
-				_user_info.sockfd = sockfd;
-				_user_info_map_itr->second = _user_info;
-				send_location_info_to_clients(_username);
-			}
-		}
-	}
-	else if (_command_operator == "i")
-	{
-		if (parsed_command.size() < 3)
-		{
-			send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "Invalid Command");
-		}
-		else
-		{
-			std::string _username = parsed_command.at(1);
-			std::string _potential_friend_username = parsed_command.at(2);
-			std::unordered_map<std::string, user_info>::iterator _user_info_map_itr =
-				user_info_map.find(_username);
-			std::unordered_map<std::string, user_info>::iterator _friend_user_info_map_itr =
-				user_info_map.find(_potential_friend_username);
-			if (_friend_user_info_map_itr != user_info_map.end() &&
-				_user_info_map_itr != user_info_map.end())
-			{
-				user_info _user_info = _user_info_map_itr->second;
-				user_info _friend_user_info = _friend_user_info_map_itr->second;
-				bool _is_friend = false;
-				for (unsigned int i = 0; i < _user_info.contact_user_name_list.size(); i++)
-				{
-					if (_user_info.contact_user_name_list.at(i) == _potential_friend_username)
-					{
-						_is_friend = true;
-						break;
-					}
-				}
 
-				if (_is_friend)
-				{
-					send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "Already friend");
-				}
-				else
-				{
-					std::string _data_to_friend = _username;
-					std::string _message_from_friend = "";
-					if (parsed_command.size() > 3)
-					{
-						_message_from_friend = parsed_command.at(3);
-						_data_to_friend += (_sentinel + _message_from_friend);
-					}
-					_friend_user_info_map_itr->second.potential_friends_list.push_back(_username);
-					if (_friend_user_info.is_logged_in)
-						send_data_to_client(_friend_user_info.sockfd, "ir", _data_to_friend);
-
-					send_data_to_client(sockfd, _command_operator, std::string("200"));
-				}
-			}
-			else
-			{
-				send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "User not found");
-			}
-		}
-	}
-	else if (_command_operator == "m")
-	{
-		if (parsed_command.size() < 4)
-		{
-			send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "Invalid Message");
-		}
-		else
-		{
-			std::string _username = parsed_command.at(1);
-			std::string _potential_friend_username = parsed_command.at(2);
-			std::unordered_map<std::string, user_info>::iterator _user_info_map_itr =
-				user_info_map.find(_username);
-			std::unordered_map<std::string, user_info>::iterator _friend_user_info_map_itr =
-				user_info_map.find(_potential_friend_username);
-			if (_friend_user_info_map_itr != user_info_map.end() &&
-				_user_info_map_itr != user_info_map.end())
-			{
-				user_info _user_info = _user_info_map_itr->second;
-				user_info _friend_user_info = _friend_user_info_map_itr->second;
-				bool _is_friend = false;
-				for (unsigned int i = 0; i < _user_info.contact_user_name_list.size(); i++)
-				{
-					if (_user_info.contact_user_name_list.at(i) == _potential_friend_username)
-					{
-						_is_friend = true;
-						break;
-					}
-				}
-
-				if (_is_friend)
-				{
-					std::string _data_to_friend = _username;
-					std::string _message_from_friend = "";
-					if (parsed_command.size() > 3)
-					{
-						_message_from_friend = parsed_command.at(3);
-						_data_to_friend += (_sentinel + _message_from_friend);
-					}
-
-					if (_friend_user_info.is_logged_in)
-						send_data_to_client(_friend_user_info.sockfd, "mr", _data_to_friend);
-					else
-					{
-						send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "Not Online");
-					}
-
-					send_data_to_client(sockfd, _command_operator, std::string("200"));
-				}
-				else
-				{
-					send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "Not Friend");
-				}
-			}
-			else
-			{
-				send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "User not found");
-			}
-		}
-	}
-	else if (_command_operator == "ia" || _command_operator == "id")
-	{
-		if (parsed_command.size() < 3)
-		{
-			send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "Invalid Command");
-		}
-		else
-		{
-			std::string _username = parsed_command.at(1);
-			std::string _potential_friend_username = parsed_command.at(2);
-			std::unordered_map<std::string, user_info>::iterator _user_info_map_itr =
-				user_info_map.find(_username);
-			std::unordered_map<std::string, user_info>::iterator _friend_user_info_map_itr =
-				user_info_map.find(_potential_friend_username);
-			if (_friend_user_info_map_itr != user_info_map.end() &&
-				_user_info_map_itr != user_info_map.end())
-			{
-				user_info _user_info = _user_info_map_itr->second;
-				user_info _friend_user_info = _friend_user_info_map_itr->second;
-
-				bool _is_friend = false;
-				for (unsigned int i = 0; i < _user_info.contact_user_name_list.size(); i++)
-				{
-					if (_user_info.contact_user_name_list.at(i) == _potential_friend_username)
-					{
-						_is_friend = true;
-						break;
-					}
-				}
-
-				bool _is_potential_friend = false;
-				for (unsigned int i = 0; i < _user_info.potential_friends_list.size(); i++)
-				{
-					if (_user_info.potential_friends_list.at(i) == _potential_friend_username)
-					{
-						_is_potential_friend = true;
-						break;
-					}
-				}
-
-				if (_is_friend)
-				{
-					send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "Already friend");
-				}
-				else if (!_is_potential_friend)
-				{
-					send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "Did not get Request");
-				}
-				else
-				{
-					std::string _data_to_friend = _username;
-					std::string _message_from_friend = "";
-					if (parsed_command.size() > 3)
-					{
-						_message_from_friend = parsed_command.at(3);
-						_data_to_friend += (_sentinel + _message_from_friend);
-					}
-					if (_command_operator == "ia")
-					{
-						_user_info_map_itr->second.contact_user_name_list.push_back(_potential_friend_username);
-						_friend_user_info_map_itr->second.contact_user_name_list.push_back(_username);
-						std::vector<std::string>::iterator _potential_itr =
-							std::find(_user_info_map_itr->second.potential_friends_list.begin(),
-									  _user_info_map_itr->second.potential_friends_list.end(),
-									  _potential_friend_username);
-						if (_potential_itr != _user_info_map_itr->second.potential_friends_list.end())
-							_user_info_map_itr->second.potential_friends_list.erase(_potential_itr);
-
-						if (_friend_user_info.is_logged_in)
-							send_data_to_client(_friend_user_info.sockfd, "iar", _data_to_friend);
-					}
-					else
-					{
-						std::vector<std::string>::iterator _potential_itr =
-							std::find(_user_info_map_itr->second.potential_friends_list.begin(),
-									  _user_info_map_itr->second.potential_friends_list.end(),
-									  _potential_friend_username);
-						if (_potential_itr != _user_info_map_itr->second.potential_friends_list.end())
-							_user_info_map_itr->second.potential_friends_list.erase(_potential_itr);
-						if (_friend_user_info.is_logged_in)
-							send_data_to_client(_friend_user_info.sockfd, "idr", _data_to_friend);
-					}
-
-					send_data_to_client(sockfd, _command_operator, std::string("200"));
-				}
-			}
-			else
-			{
-				send_data_to_client(sockfd, _command_operator, std::string("500") + _sentinel + "User not found");
-			}
-		}
-	}
-	else if (_command_operator == "logout")
-	{
-		send_data_to_client(sockfd, _command_operator, std::string("200"));
-		std::string _username = parsed_command.at(1);
-		std::unordered_map<std::string, user_info>::iterator _user_info_itr =
-			user_info_map.find(_username);
-		if (_user_info_itr != user_info_map.end())
-		{
-			_user_info_itr->second.is_logged_in = false;
-			_user_info_itr->second.ip = "";
-			_user_info_itr->second.port = -1;
-			_user_info_itr->second.sockfd = -1;
-		}
-		send_logout_info_to_clients(_username);
+		broad_cast_data_to_other_clients(sockfd, "ccr", _data_to_client);
 	}
 	else if (_command_operator == "p")
 	{
@@ -686,4 +356,18 @@ void server::sigint_handler(int signal)
 {
 	_server->_exit();
 	exit(0);
+}
+
+void server::broad_cast_data_to_other_clients(int in_sockfd, std::string command, std::string data)
+{
+	std::list<int>::iterator _sockfds_itr = sockfds.begin();
+	while(_sockfds_itr != sockfds.end())
+	{
+		int client_sock = *_sockfds_itr;
+		if(client_sock != in_sockfd)
+		{
+			send_data_to_client(client_sock, command, data);
+		}
+		_sockfds_itr++;
+	}
 }

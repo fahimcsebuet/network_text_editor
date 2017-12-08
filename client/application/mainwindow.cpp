@@ -2,14 +2,10 @@
 
 #include "mainwindow.h"
 
-void MainWindow::set_client(client in_client)
-{
-    m_client = in_client;
-}
-
 MainWindow::MainWindow()
     : textEdit(new QPlainTextEdit)
 {
+    isEditedManually = true;
     setCentralWidget(textEdit);
 
     createActions();
@@ -21,6 +17,8 @@ MainWindow::MainWindow()
             this, &MainWindow::documentWasModified);
 
     connect(textEdit, SIGNAL(textChanged()), this, SLOT(onTextChangedSignal()));
+    connect(&m_client, SIGNAL(change_character_received_signal(int, QString)),
+            this, SLOT(change_character_received_slot(int, QString)));
 
 #ifndef QT_NO_SESSIONMANAGER
     QGuiApplication::setFallbackSessionManagementEnabled(false);
@@ -30,10 +28,16 @@ MainWindow::MainWindow()
 
     setCurrentFile(QString());
     setUnifiedTitleAndToolBarOnMac(true);
+
+    std::string _configuration_file = "configuration_file";
+
+    m_client.init(_configuration_file);
+    m_client.start();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    m_client._exit();
     if (maybeSave()) {
         writeSettings();
         event->accept();
@@ -42,14 +46,26 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
+void MainWindow::change_character_received_slot(int position, QString text)
+{
+    isEditedManually = false;
+    textEdit->textCursor().insertText(text);
+}
+
 void MainWindow::onTextChangedSignal()
 {
+    if(!isEditedManually)
+    {
+        isEditedManually = true;
+        return;
+    }
     char _sentinel = -1;
     int _position = textEdit->textCursor().position();
+    std::string _command ="cc"; // Character Change
     std::string _positionString = std::to_string(_position);
     QChar _charAtCursor = textEdit->toPlainText().at(_position - 1);
     std::string _inputString = QString(_charAtCursor).toStdString();
-    std::string _dataToServer = _positionString + _sentinel + _inputString;
+    std::string _dataToServer = _command + _sentinel + _positionString + _sentinel + _inputString;
     m_client.send_data_to_server(_dataToServer);
 }
 

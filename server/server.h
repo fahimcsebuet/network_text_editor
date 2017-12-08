@@ -1,6 +1,7 @@
 #ifndef SERVER_SERVER_H_
 #define SERVER_SERVER_H_
 
+#include <list>
 #include <string>
 #include <unordered_map>
 
@@ -14,7 +15,7 @@ public:
     int _exit();
 
 private:
-    
+    std::list<int> sockfds;
 	int cli_sockfd;
     std::string user_info_file_path;
     std::string configuration_file_path;
@@ -30,8 +31,7 @@ private:
     void send_logout_info_to_clients(std::string username);
     static void sigint_handler(int signal);
     static server *_server;
-    void download_file_net(std::string path);
-    void download_file_net1();
+    void broad_cast_data_to_other_clients(int in_sockfd, std::string command, std::string data);
 };
 
 #endif
