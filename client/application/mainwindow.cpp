@@ -61,12 +61,15 @@ void MainWindow::onTextChangedSignal()
     }
     char _sentinel = -1;
     int _position = textEdit->textCursor().position();
-    std::string _command ="cc"; // Character Change
-    std::string _positionString = std::to_string(_position);
-    QChar _charAtCursor = textEdit->toPlainText().at(_position - 1);
-    std::string _inputString = QString(_charAtCursor).toStdString();
-    std::string _dataToServer = _command + _sentinel + _positionString + _sentinel + _inputString;
-    m_client.send_data_to_server(_dataToServer);
+    if(_position > 0)
+    {
+        std::string _command ="cc"; // Character Change
+        std::string _positionString = std::to_string(_position);
+        QChar _charAtCursor = textEdit->toPlainText().at(_position - 1);
+        std::string _inputString = QString(_charAtCursor).toStdString();
+        std::string _dataToServer = _command + _sentinel + _positionString + _sentinel + _inputString;
+        m_client.send_data_to_server(_dataToServer);
+    }
 }
 
 void MainWindow::newFile()
