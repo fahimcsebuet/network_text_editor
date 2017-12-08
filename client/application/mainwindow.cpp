@@ -6,6 +6,7 @@ MainWindow::MainWindow()
     : textEdit(new QPlainTextEdit)
 {
     isEditedManually = true;
+    isPullFinished = false;
     setCentralWidget(textEdit);
 
     createActions();
@@ -21,7 +22,8 @@ MainWindow::MainWindow()
             this, SLOT(change_character_received_slot(int, QString)));
     connect(&m_client, SIGNAL(pull_document_received_signal(QString)),
             this, SLOT(pull_document_received_slot(QString)));
-    connect(&m_client, SIGNAL(exit_signal()), this, SLOT(client_exit_slot()));
+    connect(&m_client, SIGNAL(pull_from_server_signal()), this, SLOT(pull_from_server_slot()));
+    connect(&m_client, SIGNAL(pull_finished_signal(bool)), this, SLOT(pull_finished_slot(bool)));
 
 #ifndef QT_NO_SESSIONMANAGER
     QGuiApplication::setFallbackSessionManagementEnabled(false);
@@ -82,12 +84,18 @@ void MainWindow::pull_document_received_slot(QString text)
     textEdit->setPlainText(text);
 }
 
-void MainWindow::client_exit_slot()
+void MainWindow::pull_from_server_slot()
 {
+    qDebug() <<"pull from server";
     char _sentinel = -1;
     std::string _command = "pu";
     QString _text = textEdit->toPlainText();
     m_client.send_data_to_server(_command + _sentinel + _text.toStdString());
+}
+
+void MainWindow::pull_finished_slot(bool pullFinished)
+{
+    isPullFinished = pullFinished;
 }
 
 void MainWindow::onTextChangedSignal()

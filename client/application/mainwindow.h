@@ -36,7 +36,8 @@ private slots:
 #endif
     void change_character_received_slot(int position, QString text);
     void pull_document_received_slot(QString text);
-    void client_exit_slot();
+    void pull_from_server_slot();
+    void pull_finished_slot(bool pullFinished);
 
 public slots:
     void onTextChangedSignal();
@@ -53,6 +54,7 @@ private:
     QString curFile;
     client m_client;
     std::atomic<bool> isEditedManually;
+    std::atomic<bool> isPullFinished;
     int textLength;
 };
 

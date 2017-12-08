@@ -24,6 +24,7 @@ server *server::_server = NULL;
 
 int server::init(std::string user_info_file_path, std::string configuration_file_path)
 {
+	file_contents = "init";
 	build_directory = "/home/fahim/Documents/FSU/Courses/COP5570/network_text_editor/server/output/";
 	_server = this;
 	signal(SIGINT, sigint_handler);
@@ -90,6 +91,8 @@ int server::run()
 				{
 					// new connection request
 					cli_sockfd = accept(serv_sockfd, (struct sockaddr *)&cli_addr, &sock_len);
+					if(sockfds.size() > 0) file_contents = "";
+					pull_file_from_other_client(cli_sockfd);
 					std::cout << "New connection accepted" << std::endl;
 					FD_SET(cli_sockfd, &masters);
 					if (cli_sockfd > maxfd)
@@ -202,6 +205,10 @@ int server::get_port_from_configuration_map()
 
 void server::handle_command_from_client(int sockfd, std::vector<std::string> parsed_command)
 {
+	// if(file_contents == "" && parsed_command.at(0) != "pu")
+	// {
+	// 	return;
+	// }
 	char _sentinel = -1;
 	if (parsed_command.empty())
 	{
@@ -274,6 +281,7 @@ void server::handle_command_from_client(int sockfd, std::vector<std::string> par
 		{
 			std::string _file_path = build_directory + "server_file";
 			std::string _text = parsed_command.at(1);
+			file_contents = _text;
 			std::ofstream _file_stream(_file_path);
 			if(_file_stream.fail())
 			{
@@ -391,6 +399,23 @@ void server::broad_cast_data_to_other_clients(int in_sockfd, std::string command
 		if(client_sock != in_sockfd)
 		{
 			send_data_to_client(client_sock, command, data);
+		}
+		_sockfds_itr++;
+	}
+}
+
+void server::pull_file_from_other_client(int in_sockfd)
+{
+	std::list<int>::iterator _sockfds_itr = sockfds.begin();
+	while(_sockfds_itr != sockfds.end())
+	{
+		int client_sock = *_sockfds_itr;
+		if(client_sock != in_sockfd)
+		{
+			std::string _command = "pl";
+			std::string _data = "200";
+			send_data_to_client(client_sock, _command, _data);
+			break;
 		}
 		_sockfds_itr++;
 	}

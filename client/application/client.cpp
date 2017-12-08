@@ -92,41 +92,6 @@ void client::pull_file(std::string filename)
     std::string _command_operator = "p";
     char _sentinel = -1;
     send_data_to_server(_command_operator + _sentinel + filename);
-
-//    //ssize_t len;
-//    int len;
-//    //struct sockaddr_in remote_addr;
-//    char buffer[BUFSIZ];
-//    int file_size;
-//    FILE *received_file;
-//    int remain_data = 0;
-
-//    /* Receiving file size */
-//    recv(sockfd, buffer, BUFSIZ, 0);
-//    file_size = atoi(buffer);
-
-//    std::cout << file_size << std::endl;
-
-//    received_file = fopen("recfile", "w");
-//    if (received_file == NULL)
-//    {
-//            fprintf(stderr, "Failed to open file foo --> %s\n", strerror(errno));
-//            return;
-//    }
-
-//    remain_data = file_size;
-
-//    while (((len = read(sockfd, buffer, BUFSIZ)) > 0) /*&& (remain_data > 0)*/)
-//    {
-//        std::cout << "111111111111111111111" << std::endl;
-//            fwrite(buffer, sizeof(char), len, received_file);
-//            std::cout << buffer << std::endl;
-////            remain_data -= len;
-//            fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
-//    }
-//    std::cout << "Reading file ends" << std::endl;
-//    fclose(received_file);
-    //close(client_socket);
 }
 
 int client::send_data_to_server(std::string data)
@@ -140,18 +105,13 @@ int client::send_data_to_server(std::string data)
         response_from_server.clear();
         response_received = false;
         write(sockfd, data.c_str(), data.length());
-//        std::unique_lock<std::mutex> _response_lock(response_mutex);
-//        while(!response_received)
-//        {
-//            response_condition_variable.wait(_response_lock);
-//        }
     }
     return EXIT_SUCCESS;
 }
 
 int client::_exit()
 {
-    emit exit_signal();
+    emit pull_from_server_signal();
     if(sockfd != -1) close(sockfd);
     configuration_file_handler _configuration_file_handler(configuration_file_path);
     _configuration_file_handler.save_configuration(configuration_map);
@@ -197,6 +157,7 @@ void client::handle_command_from_server(int in_sockfd, std::string in_command)
     {
         emit pull_document_received_signal(QString::fromStdString(in_command));
         _client->response_received = true;
+        emit pull_finished_signal(true);
         return;
     }
     if(_client->response_from_server.size() < 4)
@@ -224,6 +185,13 @@ void client::handle_command_from_server(int in_sockfd, std::string in_command)
                 emit change_character_received_signal(_position, _changed_text);
             }
             _client->response_from_server.clear();
+        }
+    }
+    else if(_command_operator == "pl")
+    {
+        if(_command_message == "200")
+        {
+            emit pull_from_server_signal();
         }
     }
 

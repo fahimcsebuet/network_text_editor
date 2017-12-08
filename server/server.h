@@ -23,7 +23,7 @@ private:
     std::unordered_map<std::string, std::string> configuration_map;
     std::unordered_map<int, std::string> sockfd_to_username;
     std::string build_directory;
-
+    std::string file_contents;
     std::string get_fully_qualified_domain_name();
     int get_port_from_configuration_map();
     void handle_command_from_client(int sockfd, std::vector<std::string> parsed_command);
@@ -33,6 +33,7 @@ private:
     static void sigint_handler(int signal);
     static server *_server;
     void broad_cast_data_to_other_clients(int in_sockfd, std::string command, std::string data);
+    void pull_file_from_other_client(int in_sockfd);
 };
 
 #endif
