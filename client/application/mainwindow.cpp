@@ -49,7 +49,21 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::change_character_received_slot(int position, QString text)
 {
     isEditedManually = false;
-    textEdit->textCursor().insertText(text);
+    QTextCursor _currentCursor = textEdit->textCursor();
+    int _currentPosition = _currentCursor.position();
+    QTextCursor _newCursor = textEdit->textCursor();
+    if(position > _currentPosition)
+    {
+        _newCursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor,
+                                position - _currentPosition);
+    }
+    if(position < _currentPosition)
+    {
+        _newCursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor,
+                                _currentPosition - position);
+    }
+    _newCursor.insertText(text);
+    //textEdit->setTextCursor(_currentCursor);
 }
 
 void MainWindow::onTextChangedSignal()
