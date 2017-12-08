@@ -19,6 +19,8 @@ MainWindow::MainWindow()
     connect(textEdit, SIGNAL(textChanged()), this, SLOT(onTextChangedSignal()));
     connect(&m_client, SIGNAL(change_character_received_signal(int, QString)),
             this, SLOT(change_character_received_slot(int, QString)));
+    connect(&m_client, SIGNAL(pull_document_received_signal(QString)),
+            this, SLOT(pull_document_received_slot(QString)));
 
 #ifndef QT_NO_SESSIONMANAGER
     QGuiApplication::setFallbackSessionManagementEnabled(false);
@@ -72,6 +74,11 @@ void MainWindow::change_character_received_slot(int position, QString text)
         _newCursor.insertText(text);
     }
     //textEdit->setTextCursor(_currentCursor);
+}
+
+void MainWindow::pull_document_received_slot(QString text)
+{
+    textEdit->setPlainText(text);
 }
 
 void MainWindow::onTextChangedSignal()

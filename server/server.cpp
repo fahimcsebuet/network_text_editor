@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
+#include <pwd.h>
 
 #include "server.h"
 
@@ -225,16 +226,22 @@ void server::handle_command_from_client(int sockfd, std::vector<std::string> par
 	}
 	else if (_command_operator == "p")
 	{
-		send_data_to_client(sockfd, "pa", "");
+		std::string _filename = "";//get_current_directory() + "/";
+		if(parsed_command.size() > 1)
+		{
+			_filename += parsed_command.at(1);
+		}
+
+		std::cout << _filename << std::endl;
 		// OPEN file, read file, stream, send stream to client
 		int fd;					  /* file descriptor for file to send */
 		struct stat stat_buf;	 /* argument to fstat */
 		off_t offset = 0;		  /* file offset */
-		fd = open("salman", O_RDONLY);
+		fd = open(_filename.c_str(), O_RDONLY);
 		if (fd == -1)
 		{
-			fprintf(stderr, "unable to open '%s': %s\n", "salman", strerror(errno));
-			exit(1);
+			fprintf(stderr, "unable to open '%s': %s\n", _filename.c_str(), strerror(errno));
+			return;
 		}
 
 		/* get the size of the file to be sent */
@@ -247,19 +254,18 @@ void server::handle_command_from_client(int sockfd, std::vector<std::string> par
 		if (rc == -1)
 		{
 			fprintf(stderr, "error from sendfile: %s\n", strerror(errno));
-			exit(1);
+			return;
 		}
 		if (rc != stat_buf.st_size)
 		{
 			fprintf(stderr, "incomplete transfer from sendfile: %d of %d bytes\n",
 					rc,
 					(int)stat_buf.st_size);
-			exit(1);
+			return;
 		}
 
 		/* close descriptor for file that was sent */
 		close(fd);
-		//send_data_to_client(sockfd, "pa", "");
 	}
 	else
 	{

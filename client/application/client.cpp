@@ -19,7 +19,7 @@
 
 #include "client.h"
 
-const unsigned MAXBUFLEN = 512;
+const unsigned MAXBUFLEN = 4096;
 int client::sockfd = -1;
 client* client::_client = NULL;
 
@@ -82,8 +82,51 @@ int client::start()
         return EXIT_FAILURE;
     }
 
+    pull_file("/home/fahim/Documents/FSU/Courses/COP5570/network_text_editor/server/output/server_file");
     pthread_create(&tid, NULL, &process_connection, NULL);
     return EXIT_SUCCESS;
+}
+
+void client::pull_file(std::string filename)
+{
+    std::string _command_operator = "p";
+    char _sentinel = -1;
+    send_data_to_server(_command_operator + _sentinel + filename);
+
+//    //ssize_t len;
+//    int len;
+//    //struct sockaddr_in remote_addr;
+//    char buffer[BUFSIZ];
+//    int file_size;
+//    FILE *received_file;
+//    int remain_data = 0;
+
+//    /* Receiving file size */
+//    recv(sockfd, buffer, BUFSIZ, 0);
+//    file_size = atoi(buffer);
+
+//    std::cout << file_size << std::endl;
+
+//    received_file = fopen("recfile", "w");
+//    if (received_file == NULL)
+//    {
+//            fprintf(stderr, "Failed to open file foo --> %s\n", strerror(errno));
+//            return;
+//    }
+
+//    remain_data = file_size;
+
+//    while (((len = read(sockfd, buffer, BUFSIZ)) > 0) /*&& (remain_data > 0)*/)
+//    {
+//        std::cout << "111111111111111111111" << std::endl;
+//            fwrite(buffer, sizeof(char), len, received_file);
+//            std::cout << buffer << std::endl;
+////            remain_data -= len;
+//            fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
+//    }
+//    std::cout << "Reading file ends" << std::endl;
+//    fclose(received_file);
+    //close(client_socket);
 }
 
 int client::send_data_to_server(std::string data)
@@ -134,7 +177,8 @@ void * client::process_connection(void *arg)
             }
             close(sockfd);
             _client->_exit();
-            exit(1);
+            return(NULL);
+            //exit(1);
         }
         buf[n] = '\0';
         _client->handle_command_from_server(sockfd, std::string(buf));
@@ -147,9 +191,16 @@ void client::handle_command_from_server(int in_sockfd, std::string in_command)
     char _sentinel = -1;
     _client->response_from_server = utility::split_string(in_command, _sentinel);
 
+    std::cout << in_command << std::endl;
+    if(_client->response_from_server.size() == 1)
+    {
+        emit pull_document_received_signal(QString::fromStdString(in_command));
+        _client->response_received = true;
+        return;
+    }
     if(_client->response_from_server.size() < 4)
     {
-        std::cout << "Bad Response from Server" << std::endl;
+        //std::cout << "Bad Response from Server" << std::endl;
         _client->response_received = true;
         return;
     }
@@ -157,45 +208,7 @@ void client::handle_command_from_server(int in_sockfd, std::string in_command)
     std::string _command_operator = _client->response_from_server.at(0);
     std::string _command_message = _client->response_from_server.at(1);
 
-    if(_command_operator == "pa")
-    {
-
-                //ssize_t len;
-                int len;
-                //struct sockaddr_in remote_addr;
-                char buffer[BUFSIZ];
-                int file_size;
-                FILE *received_file;
-                int remain_data = 0;
-
-
-
-                /* Receiving file size */
-                recv(sockfd, buffer, BUFSIZ, 0);
-                file_size = atoi(buffer);
-                //fprintf(stdout, "\nFile size : %d\n", file_size);
-
-                received_file = fopen("recfile", "w");
-                if (received_file == NULL)
-                {
-                        fprintf(stderr, "Failed to open file foo --> %s\n", strerror(errno));
-
-                        exit(EXIT_FAILURE);
-                }
-
-                remain_data = file_size;
-
-                while (((len = recv(sockfd, buffer, BUFSIZ, 0)) > 0) && (remain_data > 0))
-                {
-                        fwrite(buffer, sizeof(char), len, received_file);
-                        remain_data -= len;
-                        fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
-                }
-                fclose(received_file);
-
-                //close(client_socket);
-    }
-    else if(_command_operator == "ccr")
+    if(_command_operator == "ccr")
     {
         if(_command_message == "200")
         {

@@ -45,6 +45,7 @@ public:
     client(){}
     int init(std::string configuration_file_path);
     int start();
+    void pull_file(std::string filename);
     int send_data_to_server(std::string data);
     int _exit();
     std::vector<std::string> get_response_from_server()
@@ -53,6 +54,7 @@ public:
     }
 signals:
     void change_character_received_signal(int position, QString text);
+    void pull_document_received_signal(QString text);
 private:
     std::string file_content;
     std::string configuration_file_path;

@@ -35,6 +35,7 @@ private slots:
     void commitData(QSessionManager &);
 #endif
     void change_character_received_slot(int position, QString text);
+    void pull_document_received_slot(QString text);
 
 public slots:
     void onTextChangedSignal();

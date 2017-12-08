@@ -2,7 +2,7 @@ MKDIR_P=mkdir -p
 
 SERVER_SOURCE=*.cpp
 SERVER_OUTPUT_DIR=output
-SERVER_OUTPUT=$(SERVER_OUTPUT_DIR)/network_text_editor
+SERVER_OUTPUT=$(SERVER_OUTPUT_DIR)/network_text_editor_server
 SERVER_LIBRARIES=
 
 INCLUDES=
