@@ -33,6 +33,7 @@ MainWindow::MainWindow()
 
     m_client.init(_configuration_file);
     m_client.start();
+    textLength = textEdit->toPlainText().length();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -62,7 +63,14 @@ void MainWindow::change_character_received_slot(int position, QString text)
         _newCursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor,
                                 _currentPosition - position);
     }
-    _newCursor.insertText(text);
+    if(text == "del")
+    {
+        _newCursor.deleteChar();
+    }
+    else
+    {
+        _newCursor.insertText(text);
+    }
     //textEdit->setTextCursor(_currentCursor);
 }
 
@@ -75,14 +83,24 @@ void MainWindow::onTextChangedSignal()
     }
     char _sentinel = -1;
     int _position = textEdit->textCursor().position();
-    if(_position > 0)
+    if(_position >= 0)
     {
         std::string _command ="cc"; // Character Change
         std::string _positionString = std::to_string(_position);
-        QChar _charAtCursor = textEdit->toPlainText().at(_position - 1);
-        std::string _inputString = QString(_charAtCursor).toStdString();
+        std::string _inputString = "";
+        if(textEdit->toPlainText().length() > textLength && _position > 0)
+        {
+            QChar _charAtCursor = textEdit->toPlainText().at(_position - 1);
+            _inputString = QString(_charAtCursor).toStdString();
+        }
+        else if(textEdit->toPlainText().length() < textLength)
+        {
+            _inputString = "del";
+        }
+
         std::string _dataToServer = _command + _sentinel + _positionString + _sentinel + _inputString;
         m_client.send_data_to_server(_dataToServer);
+        textLength = textEdit->toPlainText().length();
     }
 }
 

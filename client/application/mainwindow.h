@@ -52,6 +52,7 @@ private:
     QString curFile;
     client m_client;
     std::atomic<bool> isEditedManually;
+    int textLength;
 };
 
 #endif
